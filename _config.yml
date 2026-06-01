@@ -1,0 +1,5 @@
+title: BeerPin
+description: Track and rate the beers you've tried.
+theme: jekyll-theme-cayman
+show_downloads: false
+baseurl: "/beerpin-legal"
