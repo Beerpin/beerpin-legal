@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BeerPin – Passwort zurücksetzen</title>
+  <style>
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #1A1A2E; color: #FFFFFF;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      padding: 24px; box-sizing: border-box;
+    }
+    .card { max-width: 360px; width: 100%; }
+    .logo { font-size: 64px; margin-bottom: 8px; }
+    h1 { font-size: 28px; margin: 0 0 4px; }
+    p { color: #A0AEC0; font-size: 16px; margin: 0 0 28px; }
+    .btn {
+      display: block; text-decoration: none; font-weight: 700; font-size: 16px;
+      padding: 14px 18px; border-radius: 12px; margin: 10px 0;
+    }
+    .primary { background: #F5A623; color: #1A1A2E; }
+    .secondary { background: transparent; color: #F5A623; border: 1px solid #F5A623; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🔑</div>
+    <h1>BeerPin</h1>
+    <p id="msg">Passwort wird in der App zurückgesetzt…</p>
+    <a class="btn primary" id="openApp" href="#">In der App öffnen</a>
+    <a class="btn secondary" id="store" href="https://apps.apple.com/app/id6776305237">Im App Store laden</a>
+  </div>
+  <script>
+    (function () {
+      // Supabase haengt die Recovery-Tokens als URL-Fragment an
+      // (#access_token=…&refresh_token=…&type=recovery) bzw. bei PKCE ?code=….
+      // Beides wird unveraendert an die App durchgereicht; die App setzt daraus
+      // die Session (lib/authLinks.ts) und oeffnet den Passwort-Screen.
+      var hash = location.hash || '';
+      var query = location.search || '';
+      var msg = document.getElementById('msg');
+
+      // Abgelaufener/benutzter Link: Supabase liefert error=… im Fragment.
+      if (/error=/.test(hash) || /error=/.test(query)) {
+        msg.textContent = 'Dieser Link ist abgelaufen oder wurde schon benutzt. Bitte fordere in der App einen neuen an.';
+        document.getElementById('openApp').classList.add('hidden');
+        return;
+      }
+      if (!hash && !query) {
+        msg.textContent = 'Dieser Link ist unvollständig. Bitte öffne ihn direkt aus der E-Mail auf deinem Handy.';
+        document.getElementById('openApp').classList.add('hidden');
+        return;
+      }
+
+      var appLink = 'beerpin://reset-password' + query + hash;
+      document.getElementById('openApp').href = appLink;
+
+      // App installiert? -> Seite wird in den Hintergrund gedraengt, Timer abbrechen.
+      var start = Date.now();
+      var timer = setTimeout(function () {
+        if (Date.now() - start < 2500) {
+          msg.textContent = 'App nicht gefunden. Installiere BeerPin und öffne den Link dann erneut.';
+        }
+      }, 1500);
+      function cancel() { clearTimeout(timer); }
+      document.addEventListener('visibilitychange', function () { if (document.hidden) cancel(); });
+      window.addEventListener('pagehide', cancel);
+      window.addEventListener('blur', cancel);
+
+      location.replace(appLink);
+    })();
+  </script>
+</body>
+</html>
